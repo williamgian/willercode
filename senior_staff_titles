@@ -1,0 +1,133 @@
+
+
+rm(list=ls(all=TRUE)) 
+
+library(plyr)
+library(stats)
+library(Hmisc)
+library(aod)
+library(gdata)
+library(plyr)
+library(epicalc)
+library(sqldf)
+library(ggplot2)
+library(maps)
+library(rgeos)
+library(sqldf)
+library(maptools)
+library(pastecs)
+library(reshape)
+library(psych)
+library(Hmisc)
+library(lubridate)
+library(survival)
+library(stringr)
+library(rJava)
+library(xlsx)
+library(zoo)
+library(car)
+library(RCurl)
+library(stringr)
+library(doBy)
+library(data.table)
+library(RODBC)
+nycaps <- read.csv(file = "N:/@SWIM TEAM/20_Projects/0000_NYCAPS_DATA/NYCAPS_Actives_20160331.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
+
+colnames(nycaps) <- tolower(colnames(nycaps))
+colnames(nycaps) <- gsub("\\.", "_", colnames(nycaps))
+
+nycaps$flag_ft <- ifelse(nycaps$pay_class_code == "A" | nycaps$pay_class_code == "D" |
+                             nycaps$pay_class_code == "E" | nycaps$pay_class_code == "F" |
+                             nycaps$pay_class_code == "K" | nycaps$pay_class_code == "S", 1, 0)
+
+
+nycaps$flag_size <- ifelse(nycaps$agency == 41 | nycaps$agency == 866 |nycaps$agency == 19 |
+                             nycaps$agency == 9 |nycaps$agency == 127 |nycaps$agency == 261, 1, 0)
+
+nycaps$flag_function <- ifelse(nycaps$agency == 841 | nycaps$agency == 71 |nycaps$agency == 781 |
+                             nycaps$agency == 866, 1, 0)
+
+nycaps$flag_tlc <- ifelse(nycaps$agency == 156, 1, 0)
+
+nycaps$flag_sst <- ifelse(nycaps$senior_staff_title != "", 1, 0)
+
+
+
+nycaps_data <- as.data.table(nycaps)
+
+
+
+
+
+tlc <- nycaps_data[ flag_tlc == 1 & senior_staff_title != "" & flag_ft == 1, j=list(
+  employess=length(social_security_number),
+  min_sal=min(salary_base_rate),
+  median_sal=quantile(salary_base_rate, probs=.5),
+  max_sal=max(salary_base_rate)), 
+  by=senior_staff_title][order(senior_staff_title)]
+
+
+tlc1 <- nycaps_data[ flag_tlc == 1 & senior_staff_title != "" & flag_ft == 1, j=list(
+  employess=length(social_security_number),
+  min_sal=min(salary_base_rate),
+  median_sal=quantile(salary_base_rate, probs=.5),
+  max_sal=max(salary_base_rate)), 
+  by=flag_tlc][order(flag_tlc)]
+
+
+size <- nycaps_data[ flag_size == 1 & senior_staff_title != "" & flag_ft == 1, j=list(
+  employess=length(social_security_number),
+  min_sal=min(salary_base_rate),
+  median_sal=quantile(salary_base_rate, probs=.5),
+  max_sal=max(salary_base_rate)), 
+  by=senior_staff_title][order(senior_staff_title)]
+
+
+size1 <- nycaps_data[ flag_size == 1 & senior_staff_title != "" & flag_ft == 1, j=list(
+  employess=length(social_security_number),
+  min_sal=min(salary_base_rate),
+  median_sal=quantile(salary_base_rate, probs=.5),
+  max_sal=max(salary_base_rate)), 
+  by=flag_size][order(flag_size)]
+
+func <- nycaps_data[ flag_function == 1 & senior_staff_title != "" & flag_ft == 1, j=list(
+  employess=length(social_security_number),
+  min_sal=min(salary_base_rate),
+  median_sal=quantile(salary_base_rate, probs=.5),
+  max_sal=max(salary_base_rate)), 
+  by=senior_staff_title][order(senior_staff_title)]
+
+
+func1 <- nycaps_data[ flag_function == 1 & senior_staff_title != "" & flag_ft == 1, j=list(
+  employess=length(social_security_number),
+  min_sal=min(salary_base_rate),
+  median_sal=quantile(salary_base_rate, probs=.5),
+  max_sal=max(salary_base_rate)), 
+  by=flag_function][order(flag_function)]
+
+
+tlc1 <- rename(tlc1,c ("flag_tlc"="senior_staff_title"))
+size1 <- rename(size1,c ("flag_size"="senior_staff_title"))
+func1 <- rename(func1,c ("flag_function"="senior_staff_title"))
+
+
+
+tlc_data <- rbind(tlc, tlc1)
+size_data <- rbind(size, size1)
+func_data <- rbind(func, func1)
+
+tlc_data <- rename(tlc_data,c ( "employess" = "employess_tlc", "min_sal"="min_sal_tlc", 
+                               "median_sal"="median_sal_tlc", "max_sal"="max_sal_tlc"))
+
+
+
+##  BP Edit: CHanges from all.X=T to all=T to keep all rows
+
+size_agencies <- merge(x=tlc_data, y=size_data, by.x='senior_staff_title', by.y='senior_staff_title', all=T)
+
+func_agencies <- merge(x=tlc_data, y=func_data, by.x='senior_staff_title', by.y='senior_staff_title', all=T)
+
+
+
+write.csv(size_agencies, file = "N:/@SWIM TEAM/20_Projects/201605_SeniorStaffTitles/30_Processed_Data/CSV/size1.csv", row.names = F)
+write.csv(func_agencies, file = "N:/@SWIM TEAM/20_Projects/201605_SeniorStaffTitles/30_Processed_Data/CSV/func1.csv", row.names = F)
