@@ -36,6 +36,7 @@ pro_staff_p <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_red
 oc_man_p <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_reduction_strategy/20_Raw_Data/5010.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
 pro_man_p <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_reduction_strategy/20_Raw_Data/5516.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
 
+## combine passers
 passers <- rbind(oc_staff_p, pro_staff_p, oc_man_p, pro_man_p)
 
 colnames(passers) <- gsub("\\.", "_", tolower(colnames(passers)))
@@ -44,11 +45,10 @@ passers1 <- passers[,c("ssn", "exam_no")]
 
 passers1$passer_flag <- "Y"
 
+##read takers 
 takers <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_reduction_strategy/20_Raw_Data/examfile021916.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
 
 colnames(takers) <- gsub("\\.", "_", tolower(colnames(takers)))
-
-## rename takers_ to taker_var or taker_flag
 
 takers$taker_flag <- takers$taker_
 
