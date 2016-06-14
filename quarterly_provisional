@@ -1,0 +1,257 @@
+## Clear Environment ####
+rm(list=ls(all=TRUE)) 
+
+##Load Relevant Libraries ####
+library(stats)
+library(Hmisc)
+library(aod)
+library(gdata)
+library(plyr)
+library(epicalc)
+library(sqldf)
+library(ggplot2)
+library(maps)
+library(rgeos)
+library(sqldf)
+library(maptools)
+library(pastecs)
+library(reshape)
+library(psych)
+library(Hmisc)
+library(lubridate)
+library(survival)
+library(stringr)
+library(rJava)
+library(xlsx)
+library(zoo)
+library(car)
+library(RCurl)
+library(stringr)
+library(doBy)
+
+## Folder Directories
+rawfold <- "N:/@SWIM TEAM/20_Projects/201503_CityCouncilFollowUp/20_Raw_Data/"
+# reffold <- "N:/@SWIM TEAM/20_Projects/2014 Workforce Profile Report/Reference Table/"
+outfold <- "N:/@SWIM TEAM/20_Projects/201503_CityCouncilFollowUp/30_Processed_Data/CSV/"
+prutilfold <- "N:/@SWIM TEAM/20_Projects/201503_CityCouncilFollowUp/20_Raw_Data/PRUTIL51/"
+
+for (i in c(2007:2016)){
+if (i==2007){
+  for (month in c("0831","1130")){
+    yearsub <- substring(as.character(i),3,4)
+    filepaste = paste0(prutilfold, "PRUTIL51_D",yearsub, month,".txt")
+    tempfile <- read.delim(file=filepaste, sep="|", header=F, row.names=NULL)
+    print(filepaste)
+    colnames(tempfile) <- c("applicant_name" , "ssn",  "emp_num","agency_code"  ,"title_code",	"title_desc",	
+    "title_class",	"reason_code",	"rule_number",	"job_type",	"css",	"pay_class",	"num_months",	
+    "exam_num",	"list_num",	"perm_agency_code"	,"perm_title_code")
+    colnames(tempfile) <- gsub("\\ ","_", tolower(colnames(tempfile)))
+    tempfile$reportdate <- paste(yearsub,month, sep="")
+	  tempfile$reportdate1 <- as.Date(tempfile$reportdate, format="%y%m%d")
+    assign(paste("prtl_", yearsub, month, sep=""), tempfile)
+  }
+}
+	else if (i==2008){
+  for (month in c("0229", "0531","0831","1130")){
+    yearsub <- substring(as.character(i),3,4)
+    filepaste = paste0(prutilfold, "PRUTIL51_D",yearsub, month,".txt")
+    tempfile <- read.delim(file=filepaste, sep="|", header=F, row.names=NULL)
+    print(filepaste)
+    colnames(tempfile) <- c("applicant_name" , "ssn",  "emp_num","agency_code"  ,"title_code",	"title_desc",	
+    "title_class",	"reason_code",	"rule_number",	"job_type",	"css",	"pay_class",	"num_months",	
+    "exam_num",	"list_num",	"perm_agency_code"	,"perm_title_code")
+    colnames(tempfile) <- gsub("\\ ","_", tolower(colnames(tempfile)))
+    tempfile$reportdate <- paste(yearsub,month, sep="")
+	  tempfile$reportdate1 <- as.Date(tempfile$reportdate, format="%y%m%d")
+    assign(paste("prtl_", yearsub, month, sep=""), tempfile)
+  }
+}
+  else if (i==2012){
+  for (month in c("0229","0531","0831","1130")){
+    yearsub <- substring(as.character(i),3,4)
+    filepaste = paste0(prutilfold, "PRUTIL51_D",yearsub, month,".txt")
+    tempfile <- read.delim(file=filepaste, sep="|", header=F, row.names=NULL)
+    print(filepaste)
+    colnames(tempfile) <- c("applicant_name" , "ssn",  "emp_num","agency_code"  ,"title_code",	"title_desc",	
+    "title_class",	"reason_code",	"rule_number",	"job_type",	"css",	"pay_class",	"num_months",	
+    "exam_num",	"list_num",	"perm_agency_code"	,"perm_title_code")
+    colnames(tempfile) <- gsub("\\ ","_", tolower(colnames(tempfile)))
+    tempfile$reportdate <- paste(yearsub,month, sep="")
+	  tempfile$reportdate1 <- as.Date(tempfile$reportdate, format="%y%m%d")
+    assign(paste("prtl_", yearsub, month, sep=""), tempfile)
+  }
+  }
+  else if (i==2016){
+  for (month in c("0229")){
+    yearsub <- substring(as.character(i),3,4)
+    filepaste = paste0(prutilfold, "PRUTIL51_D",yearsub, month,".txt")
+    tempfile <- read.delim(file=filepaste, sep="|", header=F, row.names=NULL)
+    print(filepaste)
+    colnames(tempfile) <- c("applicant_name" , "ssn",  "emp_num","agency_code"  ,"title_code",	"title_desc",	
+    "title_class",	"reason_code",	"rule_number",	"job_type",	"css",	"pay_class",	"num_months",	
+    "exam_num",	"list_num",	"perm_agency_code"	,"perm_title_code")
+    colnames(tempfile) <- gsub("\\ ","_", tolower(colnames(tempfile)))
+    tempfile$reportdate <- paste(yearsub,month, sep="")
+	  tempfile$reportdate1 <- as.Date(tempfile$reportdate, format="%y%m%d")
+    assign(paste("prtl_", yearsub, month, sep=""), tempfile)
+  }
+  }	
+  	else {
+  		for (month in c("0228", "0531", "0831", "1130")){
+  	yearsub <- substring(as.character(i),3,4)
+    filepaste = paste0(prutilfold, "PRUTIL51_D",yearsub, month,".txt")
+    tempfile <- read.delim(file=filepaste, sep="|", header=F, row.names=NULL)
+    print(filepaste)
+    colnames(tempfile) <- c("applicant_name" , "ssn",  "emp_num","agency_code"  ,"title_code",	"title_desc",	
+    "title_class",	"reason_code",	"rule_number",	"job_type",	"css",	"pay_class",	"num_months",	
+    "exam_num",	"list_num",	"perm_agency_code"	,"perm_title_code")
+    colnames(tempfile) <- gsub("\\ ","_", tolower(colnames(tempfile)))
+    tempfile$reportdate <- paste(yearsub,month, sep="")
+	  tempfile$reportdate1 <- as.Date(tempfile$reportdate, format="%y%m%d")
+    assign(paste("prtl_", yearsub, month, sep=""), tempfile)
+
+  		}
+  	}
+}
+
+
+## Single Report
+  for (i in 2016){
+  	for (month in c("0531")){
+    yearsub <- substring(as.character(i),3,4)
+    filepaste = paste0(prutilfold, "PRUTIL51_D",yearsub, month,".txt")
+    tempfile <- read.delim(file=filepaste, sep="|", header=F, row.names=NULL)
+    print(filepaste)
+    colnames(tempfile) <- c("applicant_name" , "ssn",  "emp_num","agency_code"  ,"title_code",	"title_desc",	
+    "title_class",	"reason_code",	"rule_number",	"job_type",	"css",	"pay_class",	"num_months",	
+    "exam_num",	"list_num",	"perm_agency_code"	,"perm_title_code")
+    colnames(tempfile) <- gsub("\\ ","_", tolower(colnames(tempfile)))
+    tempfile$reportdate <- paste(yearsub,month, sep="")
+	  tempfile$reportdate1 <- as.Date(tempfile$reportdate, format="%y%m%d")
+    assign(paste("prtl_", yearsub, month, sep=""), tempfile)
+  }}
+  
+  ## List all files with PRUTIL50_D ####
+list <- ls(pattern="prtl_") #list all files in environment beginning with "prutil50_d"
+
+# list <- ls(pattern="prtl_150228") #Single File Writes
+
+## Rbind files ####
+p0 <- do.call("rbind", lapply(list, get)) #rbind using list
+
+## Variable correction
+p0$applicant_name <- str_trim(p0$applicant_name)
+p0$ssn <- str_trim(p0$ssn)
+p0$title_desc <- str_trim(p0$title_desc)
+p0$title_class <- str_trim(p0$title_class)
+p0$title_code <- str_trim(p0$title_code)
+p0$reason_code <- str_trim(p0$reason_code)
+p0$rule_number <- str_trim(p0$rule_number)
+p0$css <- str_trim(p0$css)
+p0$pay_class <- str_trim(p0$pay_class)
+p0$job_type <- str_trim(p0$job_type)
+
+## Agency Code as.numeric
+p0$agency_code <- as.numeric(p0$agency_code)
+
+## Number months as.numeric
+p0$num_months <- as.numeric(p0$num_months)
+
+## The Zorovich Problem
+blank <- p0[is.na(p0$agency_code),]
+
+p0$applicant_name[which(p0$applicant_name=="ZOROVICH,")] <- "ZOROVICH, PAUL"
+p0$ssn[which(p0$applicant_name=="ZOROVICH, PAUL")] <- "087-54-6893"
+p0$emp_num[which(p0$applicant_name=="ZOROVICH, PAUL")] <- "1047262"
+p0$agency_code[which(p0$emp_num=="1047262")] <- "740"
+p0$title_code[which(p0$emp_num=="1047262")] <- "10026"
+p0$title_desc[which(p0$emp_num=="1047262")] <- "ADMINISTRATIVE STAFF ANALYST"
+p0$title_class[which(p0$emp_num=="1047262")] <- "C"
+p0$reason_code[which(p0$emp_num=="1047262")] <- "A17"
+p0$rule_number[which(p0$emp_num=="1047262")] <- "5.5.1"
+p0$job_type[which(p0$emp_num=="1047262")] <- ""
+p0$css[which(p0$emp_num=="1047262")] <- "J"
+p0$pay_class[which(p0$emp_num=="1047262")] <- "A"
+p0$exam_num[which(p0$emp_num=="1047262")] <- ""
+p0$list_num[which(p0$emp_num=="1047262")] <- ""
+p0$reason_code[which(p0$emp_num=="1047262")] <- ""
+
+p0$num_months[which(p0$emp_num=="1047262" & p0$reportdate=="080531")] <- 18
+p0$num_months[which(p0$emp_num=="1047262" & p0$reportdate=="080831")] <- 21
+p0$num_months[which(p0$emp_num=="1047262" & p0$reportdate=="081131")] <- 24
+p0$num_months[which(p0$emp_num=="1047262" & p0$reportdate=="090228")] <- 27
+p0$num_months[which(p0$emp_num=="1047262" & p0$reportdate=="090531")] <- 30
+p0$num_months[which(p0$emp_num=="1047262" & p0$reportdate=="090831")] <- 33
+
+## Pure v Step Flags ####
+
+## Generate Perm Flag
+p0$permflag <- 0
+p0$permflag[which(p0$job_type=="PERM")] <- 1
+
+# Generate Pure Flags
+p0$pure_09 <- 0
+p0$pure_09[which(p0$num_months >= 0 & p0$num_months <= 9 & p0$permflag==0)] <- 1
+p0$pure_1024 <-0
+p0$pure_1024[which(p0$num_months >= 10 & p0$num_months <= 24 & p0$permflag==0)] <- 1
+p0$pure_25plus <- 0
+p0$pure_25plus[which(p0$num_months >= 25 & p0$permflag==0)] <- 1
+p0$pure_count <- 0
+p0$pure_count[which(p0$permflag==0)] <- 1
+
+## Generate Step Flags
+p0$step_09 <- 0
+p0$step_09[which(p0$num_months >= 0 & p0$num_months <= 9 & p0$permflag==1)] <- 1
+p0$step_1024 <- 0
+p0$step_1024[which(p0$num_months >= 10 & p0$num_months <= 24 & p0$permflag==1)] <- 1
+p0$step_25plus <- 0
+p0$step_25plus[which(p0$num_months >= 25 & p0$permflag==1)] <- 1
+p0$step_count <- 0
+p0$step_count [which(p0$permflag==1)] <- 1
+
+p0$months_09 <- 0
+p0$months_09[which(p0$num_months >= 0 & p0$num_months <= 9)] <- 1
+p0$months_1024 <- 0
+p0$months_1024[which(p0$num_months >= 10 & p0$num_months <= 24)] <- 1
+p0$months_25plus <- 0
+p0$months_25plus[which(p0$num_months >= 25)] <- 1
+
+## Merge Agency Codes ####
+## Load Agency Codes
+agy <- read.csv("N:/Chaz/20_Projects/0003_CityHallQuarterly/20_Raw_Data/agency_codes_2014-09-24.csv", sep=",", header=T, row.names=NULL)
+    colnames(agy) <- gsub("\\ ","_", tolower(colnames(agy)))
+
+## Merge in Agency Desc ##
+p1 <- sqldf("SELECT p0.*, agy.agylongdescription FROM p0 LEFT JOIN agy ON p0.agency_code=agy.agypayrollcode")
+
+p1$agency_code <- as.numeric(p1$agency_code)
+
+## Final Report File ####
+f1 <- sqldf("SELECT reportdate1, agency_code, agylongdescription,
+  sum(pure_09) sum_pure_09, sum(pure_1024) sum_pure_1024, sum(pure_25plus) sum_pure_25plus, sum(pure_count) sum_pure_subtotal,
+  sum(step_09) sum_step_09, sum(step_1024) sum_step_1024, sum(step_25plus) sum_step_25plus, sum(step_count) sum_step_subtotal,
+  count(ssn) total_count
+  FROM p1
+  GROUP BY reportdate1, agency_code
+  ORDER BY agency_code ASC, reportdate1 ASC
+")
+
+## Report - Column Headers formatted
+f2 <- sqldf("SELECT reportdate AS 'Report Date', agency_code AS 'Agency Code', agylongdescription AS 'Agency Description',
+  title_code AS 'Title Code', title_desc AS 'Title Description', 
+  sum(pure_09) 'Pure Prov. 0-9 mos', sum(pure_1024) 'Pure Prov. 10-24 mos', sum(pure_25plus) 'Pure Prov. 25+ mos', sum(pure_count) 'Pure Subtotal',
+  sum(step_09) 'Step Prov. 0-9 mos', sum(step_1024) 'Step Prov. 10-24 mos', sum(step_25plus) 'Step Prov. 25+ mos', sum(step_count) 'Step Subtotal',
+  count(ssn) AS 'Total Count'
+  FROM p1
+  GROUP BY reportdate, agency_code, title_code
+  ORDER BY reportdate ASC, agency_code ASC, title_code ASC
+")
+
+## Write Quarterly Report to CSV for each quarter
+for (rdate in unique(p1$reportdate)){
+# 	dum <- sqldf(paste0("SELECT * FROM f2 WHERE 'Report Date'=",rdate, " ORDER BY 'Agency Code' ASC, 'Title Code' ASC"))
+	dum <- f2[which(f2$'Report Date'==rdate),]
+	dum <- dum[order(dum$'Agency Code', dum$'Title Code'),]
+	write.csv(dum, file=paste0(outfold, "/Provisional_Reports/22A_Charter_Mandated_Report_on_Provisionals_", rdate,".csv"), row.names=FALSE)
+	print(rdate)
+}
