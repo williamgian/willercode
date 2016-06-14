@@ -1,0 +1,228 @@
+##
+
+library(plyr)
+library(stats)
+library(Hmisc)
+library(aod)
+library(gdata)
+library(plyr)
+library(epicalc)
+library(sqldf)
+library(ggplot2)
+library(maps)
+library(rgeos)
+library(sqldf)
+library(maptools)
+library(pastecs)
+library(reshape)
+library(psych)
+library(Hmisc)
+library(lubridate)
+library(survival)
+library(stringr)
+library(rJava)
+library(xlsx)
+library(zoo)
+library(car)
+library(RCurl)
+library(stringr)
+library(doBy)
+library(reshape)
+library(RODBC)
+
+#read files
+oc_staff_p <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_reduction_strategy/20_Raw_Data/5011.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
+pro_staff_p <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_reduction_strategy/20_Raw_Data/5517.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
+oc_man_p <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_reduction_strategy/20_Raw_Data/5010.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
+pro_man_p <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_reduction_strategy/20_Raw_Data/5516.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
+
+passers <- rbind(oc_staff_p, pro_staff_p, oc_man_p, pro_man_p)
+
+colnames(passers) <- gsub("\\.", "_", tolower(colnames(passers)))
+
+passers1 <- passers[,c("ssn", "exam_no")]
+
+passers1$passer_flag <- "Y"
+
+takers <- read.csv(file = "N:/@SWIM TEAM/20_Projects/201601_provisional_reduction_strategy/20_Raw_Data/examfile021916.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
+
+colnames(takers) <- gsub("\\.", "_", tolower(colnames(takers)))
+
+## rename takers_ to taker_var or taker_flag
+
+takers$taker_flag <- takers$taker_
+
+takers <- subset(takers, takers$exam_no == 5010 | takers$exam_no == 5011 | takers$exam_no == 5516 | takers$exam_no == 5517)
+
+## subset takers to columns you want/need - ssn, exam no, taker y/n
+
+takers <- takers[,c("ssn", "exam_no", "taker_flag")]
+
+## load nycaps
+nycaps <- read.csv(file = "N:/@SWIM TEAM/20_Projects/0000_NYCAPS_DATA/NYCAPS_Actives_20160331.csv", header = TRUE, sep = ",", stringsAsFactors = F, strip.white = T)
+
+colnames(nycaps) <- gsub("\\.", "_", tolower(colnames(nycaps)))
+
+## subset to dcas
+dcas <- subset(nycaps, nycaps$agency == 868) # yay we are good to go
+
+dcas <- dcas[,c("social_security_number", "agency", "agency_description", "title_code", "title_description", "civil_service_code")]
+
+## takers
+## currently long
+## prefer wide - why? prefer 1 row to 1 row joining
+## how? reshape
+
+takers_wide <- reshape(takers, 
+                  timevar = "exam_no", 
+                  idvar = c("ssn"),
+                  direction = "wide")
+
+
+passers_wide <- reshape(passers1, 
+                       timevar = "exam_no", 
+                       idvar = c("ssn"),
+                       direction = "wide")
+
+
+## join dcas <> takers on ssn
+
+dcas_takers <- merge(x=dcas, y=takers_wide, by.x='social_security_number', by.y='ssn')
+
+## join dcas takers <<<<< passers ssn
+
+dcas_takers_passers <- merge(x=dcas_takers, y=passers_wide, by.x='social_security_number', by.y='ssn', all.x=T)
+
+## collapse flags
+
+dcas_takers_passers$ASA_Taker <- ifelse(dcas_takers_passers$taker_flag.5011 == 'Y' | dcas_takers_passers$taker_flag.5517 == 'Y', 'Y', 'N')
+
+dcas_takers_passers$AM_Taker <- ifelse(dcas_takers_passers$taker_flag.5010 == 'Y' | dcas_takers_passers$taker_flag.5516 == 'Y', 'Y', 'N')
+
+dcas_takers_passers$ASA_Passer <- ifelse(dcas_takers_passers$passer_flag.5011 == 'Y' | dcas_takers_passers$passer_flag.5517 == 'Y', 'Y', 'N')
+
+dcas_takers_passers$AM_Passer <- ifelse(dcas_takers_passers$passer_flag.5010 == 'Y' | dcas_takers_passers$passer_flag.5516 == 'Y', 'Y', 'N')
+
+dcas_takers_passers$Either_Taker <- ifelse(dcas_takers_passers$ASA_Taker == 'Y' | dcas_takers_passers$AM_Taker == 'Y', 'Y', 'N')
+
+dcas_takers_passers$Either_Passer <- ifelse(dcas_takers_passers$ASA_Passer == 'Y' | dcas_takers_passers$AM_Passer == 'Y', 'Y', 'N')
+
+dcas_takers_passers <- merge(x=dcas_takers_passers, y=nycaps[,c("social_security_number", "last_name", "first_name", "employee_number")], by.x='social_security_number', by.y='social_security_number', all.x=T)
+
+write.csv(dcas_takers_passers, file = "N:/@SWIM TEAM/20_Projects/DCAS_passers_20160526/30_Processed_Data/CSV/dcas_pass.csv", row.names = F)
+
+
+##second analysis 
+##connect to prov database
+db <- "X:/NYCAPS/Long Beach/Charter Provisionals v2.0.accdb"
+
+con <- odbcConnectAccess2007(db)
+
+sqlTables(con, tableType = "TABLE")$TABLE_NAME
+
+prut <- sqlFetch(con, "xtblPRUTL860")
+
+prov <- sqlFetch(con, "Charter Provisionals Detail")
+
+agency <- sqlFetch(con, "xtblAgency")
+
+odbcClose(con)
+
+#get parent title description
+prov <- merge(x=prov, y=prut[,c("prtlTitleCode", "prtlParentTitleCode", "prtlTitleDescription")], by.x='Parent Title Code', by.y='prtlParentTitleCode', all.x=T)
+
+#choose only admin man and admin staff titles
+prov <- subset(prov, prov$`Parent Title Code` == 10026 | prov$`Parent Title Code` == 10025)
+
+#get the takers and passers who are provisional
+prov <- merge(x=prov, y=takers_wide, by.x='SSN', by.y='ssn', all.x=T)
+
+prov <- merge(x=prov, y=passers_wide, by.x='SSN', by.y='ssn', all.x=T)
+
+#create flags
+prov$ASA_Taker <- ifelse(prov$taker_flag.5011 == 'Y' | prov$taker_flag.5517 == 'Y', 1, 0)
+
+prov$AM_Taker <- ifelse(prov$taker_flag.5010 == 'Y' | prov$taker_flag.5516 == 'Y', 1, 0)
+
+prov$ASA_Passer <- ifelse(prov$passer_flag.5011 == 'Y' | prov$passer_flag.5517 == 'Y', 1, 0)
+
+prov$AM_Passer <- ifelse(prov$passer_flag.5010 == 'Y' | prov$passer_flag.5516 == 'Y', 1, 0)
+
+prov$Either_Passer <- ifelse(prov$ASA_Passer == 1 | prov$AM_Passer == 1, 1, 0)
+
+prov$total_prov <- ifelse(prov$`Parent Title Code` == 10026 | prov$`Parent Title Code` == 10025, 1, 0)
+
+#remove dup
+prov1<- prov[!duplicated(prov$SSN),]
+
+prov1$type <- ifelse(is.na(prov1$`Job Type`),"Pure","Step-Up")
+
+prov_dcas <- subset(prov1,prov1$`Agency Code`==868)
+
+#group by agency and title code, summarize 
+prov_all1 <- sqldf("SELECT p.[Agency Code],p.[Parent Title Code], t.prtlTitleDescription,
+                    count(ASA_Taker), count(ASA_Passer), count(AM_Taker), count(AM_Passer), 
+                    count(Either_Passer), sum(total_prov)
+                           
+                    FROM prov1 AS p LEFT JOIN prut AS t ON
+                        p.[Parent Title Code] = t.prtlTitleCode
+                    GROUP BY p.[Agency Code], p.[Parent Title Code],t.prtlTitleDescription")
+
+#bring in agency description
+prov_all1 <- merge(x=prov_all1, y=agency[,c("agyPayrollCode", "agyLongDescription")], by.x='Agency Code', by.y='agyPayrollCode', all.x=T)
+
+#create safe calculation
+prov_all1$safe <- prov_all1$`count(Either_Passer)`/prov_all1$`sum(total_prov)`
+
+prov_all1$safe <- paste(round(prov_all1$safe*100,digits=1),"%",sep="")
+
+
+
+#get exempt employees
+nycaps1 <- subset(nycaps, nycaps$civil_service_code == "X")
+
+#get takers and passers who are in exempt titles
+nycaps1 <- merge(x=nycaps1[,c("social_security_number", "agency", "agency_description", "civil_service_code")], y=takers_wide, by.x='social_security_number', by.y='ssn', all.x=T)
+
+nycaps1 <- merge(x=nycaps1, y=passers_wide, by.x='social_security_number', by.y='ssn', all.x=T)
+
+
+#create flags
+nycaps1$ASA_Taker <- ifelse(nycaps1$taker_flag.5011 == 'Y' | nycaps1$taker_flag.5517 == 'Y', 1, 0)
+
+nycaps1$AM_Taker <- ifelse(nycaps1$taker_flag.5010 == 'Y' | nycaps1$taker_flag.5516 == 'Y', 1, 0)
+
+nycaps1$ASA_Passer <- ifelse(nycaps1$passer_flag.5011 == 'Y' | nycaps1$passer_flag.5517 == 'Y', 1, 0)
+
+nycaps1$AM_Passer <- ifelse(nycaps1$passer_flag.5010 == 'Y' | nycaps1$passer_flag.5516 == 'Y', 1, 0)
+
+nycaps1$Either_Passer <- ifelse(nycaps1$ASA_Passer == 1 | nycaps1$AM_Passer == 1, 1, 0)
+
+nycaps1$total_exempt <- 1
+
+#group by agency 
+nycaps2 <- sqldf("SELECT agency, agency_description, civil_service_code,
+                  count(ASA_Taker), count(ASA_Passer), count(AM_Taker), count(AM_Passer), 
+                    count(Either_Passer), sum(total_exempt)
+                 FROM nycaps1
+                 GROUP BY agency, agency_description")
+
+#create safe calculation
+nycaps2$safe <- nycaps2$`count(Either_Passer)`/nycaps2$`sum(total_exempt)`
+
+nycaps2$safe <- paste(round(nycaps2$safe*100,digits=1),"%",sep="")
+
+#rename column in order to rbind 
+nycaps2 <- rename(nycaps2, c("agency"="Agency Code", "agency_description"="agyLongDescription", "sum(total_exempt)"="sum(total_prov)", "Title_Code"="Parent Title Code", "Title_Code_DESC"="prtlTitleDescription"))
+      
+#combine prov and exempt 
+all <- rbind(prov_all1, nycaps2) 
+
+#group them all by agency and title 
+all1 <- sqldf("SELECT * FROM [all]
+             GROUP BY [Agency Code], agyLongDescription, [Parent Title Code], prtlTitleDescription")
+
+
+write.csv(all1, file = "N:/@SWIM TEAM/20_Projects/DCAS_passers_20160526/30_Processed_Data/CSV/pass.csv", row.names = F)
+
+write.csv(prov_dcas, file = "N:/@SWIM TEAM/20_Projects/DCAS_passers_20160526/30_Processed_Data/CSV/dcas.csv", row.names = F)
